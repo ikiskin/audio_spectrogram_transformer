@@ -1,45 +1,14 @@
-import os
 import config
-import librosa  # Import for reading wave files and resampling
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_wav_data(data_dir):
-	print(data_dir)
-	for file in os.listdir(data_dir):
-		if file.endswith('.wav'):
-			print(file)
 
 
 
+# Function to extract filterbank features to produce log-mel spectrogram
 
-def resample(data_dir, label_file, cv_fold):
-	''' Function to resample data. '''
-
-	# Read dataframe from label_file in config:
-	label_df = pd.read_csv(label_file) 
-
-	# Sub-select CV fold to process:
-	fold_df = label_df[label_df.fold == 1]
-
-	# Load and re-sample audio file. Librosa returns floats in [-1.0, 1.0].
-	for index, row in fold_df.iterrows():
-		if index == 0:  # temp to help debugging
-			filename = os.path.join(data_dir, row['filename'])
-			print(filename)
-			audio_file, sr = librosa.load(filename, sr=config.sr)
-			# Convert to int16 as required in downstream tasks
-			audio_file = (audio_file * 32767).astype(np.int16) 
-
-			print(audio_file)
-
-
-	# print(label_df) 
-	return audio_file
-
-def extract_FBANK(signal, fft_len, sr):
+def extract_FBANK(signal, fft_len, win_len, hop_len, n_mel, sr):
 	""" Extract FBANK features for wave audio file given in 8kHz. 
 	
 	We assume FBANK refers to log-mel filterbank features as referred to in literature.
@@ -61,20 +30,27 @@ def extract_FBANK(signal, fft_len, sr):
 
 	Parameters
 	----------
-	signal : [-1, 1] float
+	signal : in int16 representation of audio
 		signal converted to 8 kHz mono.
+
+	fft_len : Length of fft [in samples]
+
+	win_len : Window length to calculate frames [in samples]
+
+	hop_len : Hop length to calculate frames [in samples]
+
+	n_mel : Desired number of log-mel coefs in output
+
+	sr : sample rate of signal
 
 	Returns
 	-------
 
-	M : np.ndarray [shape=...]
-		Matrix of log-mel filterbank coefficients
+	log_mel_spectrogram : np.ndarray [shape=n_frames, n_mel]
+		Matrix of log-mel filterbank coefficients, where
+		n_frames = 1 + int(np.floor((len(signal) - win_len) / hop_len))
 	"""
 
-	# Test run:
-	win_len = 200
-	hop_len = 100
-	# fft_len = 512
 
 
 	# Calculate frames with helper function
@@ -87,7 +63,9 @@ def extract_FBANK(signal, fft_len, sr):
 		plt.title('Frames')
 		plt.plot(frames)
 		plt.show()
-	print(np.shape(frames), frames, signal)
+
+	if config.debug:
+		print('shape of frames, frames, signal\n', np.shape(frames), frames, signal)
 
 	# Calculate window
 	window = hann_window(win_len)
@@ -98,7 +76,7 @@ def extract_FBANK(signal, fft_len, sr):
 
 	# mel weights for chosen parameters:
 
-	mel_weights = create_log_mel_matrix(sr, n_spec_bins=stft.shape[1]) # Can add arguments here
+	mel_weights = create_log_mel_matrix(sr, stft.shape[1], n_mel) # Can add arguments here
 	
 
 	# Take dot product, add small offset to prevent log errors
@@ -159,8 +137,6 @@ def hann_window(win_len):
 		
 	return w
 
-def stft_mag(signal, fft_len, win_len, hop_len):
-	""" Calculate short-time Fourier transform """
 
 
 def hz_to_mel(Hz):
@@ -173,7 +149,7 @@ def hz_to_mel(Hz):
 	"""
 	return 2595 * np.log10(1. + Hz / 700.0)
 
-def create_log_mel_matrix(sr, n_spec_bins, n_mel=32):
+def create_log_mel_matrix(sr, n_spec_bins, n_mel):
 	""" Compute matrix to display 2D representation of signal in the 
 	log-mel spectrogram domain. For the purpose of this task we skip
 	a few error checks on validity of parameters and enforce hard 
@@ -189,11 +165,14 @@ def create_log_mel_matrix(sr, n_spec_bins, n_mel=32):
 
 	# Create bins of spectrogram from 0 to fs/2
 	spec_hz = np.linspace(0.0, sr / 2., n_spec_bins) 
-	print(spec_hz)
+	if config.debug:
+		print(spec_hz)
 
 	# Convert scaling to mel
 	spec_mel = hz_to_mel(spec_hz)
-	print(spec_mel)
+
+	if config.debug:
+		print(spec_mel)
 
 	# Upper edge at fs/2 Hz
 	# Lower edge at 0 Hz
@@ -212,25 +191,10 @@ def create_log_mel_matrix(sr, n_spec_bins, n_mel=32):
 
 		mel_weights[:, i] = np.maximum(0.0, np.minimum(lower, upper))
 
-
 	# Remove DC bin:
-
 	mel_weights[0, :] = 0.0
 
 	return mel_weights
 
 
 
-
-audio_file = resample(config.data_dir, config.label_file, 1)
-
-len_fft = 2 ** int(np.ceil(np.log(200) / np.log(2.0))) #
-
-lms = extract_FBANK(audio_file, len_fft, config.sr)
-# plt.plot(fft)
-# plt.show()
-
-# After break: check if sig in floats or in ints
-# see if frames are calculated correctly:
-# Calculate frame size based on seconds supplied
-# !!!!Seems to output 0s: check after lunch
