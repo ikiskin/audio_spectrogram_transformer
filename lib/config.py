@@ -19,9 +19,23 @@ win_len = 200 # In samples.
 hop_len = 100 # In samples
 len_fft = 2 ** int(np.ceil(np.log(win_len) / np.log(2.0))) # Could move out of config
 sr = 8000 # Signal rate (Hz) for re-sampling:
-n_mel = 32 # number of bins in log-mel spectrogram
+n_mel = 128 # number of bins in log-mel spectrogram to match AST paper
 
-debug = False# debug parameter. Only set to True if issues suspected, opens various diagnostic
+
+
+# Transformer encoder properties
+embed_dim = 768
+num_heads = 2
+depth = 1
+n_classes = 50
+
+# Training loop properties
+batch_size = 10
+
+
+
+
+debug = False # debug parameter. Only set to True if issues suspected, opens various diagnostic
 # plots and print statements
 
 # Create directories if they do not exist:

@@ -1,6 +1,11 @@
 ## Here we create the PyTorch model
 import torch
 import torch.nn as nn
+import collections
+from itertools import repeat
+import config
+import numpy as np
+import transformer_encoder
 
 class AST(nn.Module):
 
@@ -20,96 +25,113 @@ class AST(nn.Module):
 	  * Each patch embedding added with learnable position embedding
 	  * CLS classification token prepended to sequence
 	  * Output of CLS token used for classification with linear layer
+	  * Transformer encoder: multiple attention heads, variable depth
+	  * Final output of model.
 	"""
 
-	def __init__(self, drop_rate=0.1,img_size=224, patch_size=16 ):
-		super().__init__()
+	def __init__(self, drop_rate=0.1, patch_size=16, embed_dim=768, input_tdim=1000, input_fdim=128, fstride=10, tstride=10,
+	 n_classes=50):
+		super(AST, self).__init__()
 
-        
-        # Patch embeddings based on 
-        # https://github.com/rwightman/pytorch-image-models/blob/fa8c84eede55b36861460cc8ee6ac201c068df4d/timm/models/layers/patch_embed.py#L15
+		print('In super init')
+		# Patch embeddings based on 
+		# https://github.com/rwightman/pytorch-image-models/blob/fa8c84eede55b36861460cc8ee6ac201c068df4d/timm/models/layers/patch_embed.py#L15
 
-
-	    img_size = ...
-        patch_size = ...
-        num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
-        self.img_size = img_size
-        self.patch_size = patch_size
-        self.num_patches = num_patches
-
-        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
-
+		# From PyTorch:
+		def _ntuple(n):
+			def parse(x):
+				if isinstance(x, collections.abc.Iterable) and not isinstance(x, str):
+					return x
+				return tuple(repeat(x, n))
+			return parse
 
 
-        # automatcially get the intermediate shape
-        f_dim, t_dim = self.get_shape(fstride, tstride, input_fdim, input_tdim)
-        num_patches = f_dim * t_dim
-        self.num_patches = num_patches
-        if verbose == True:
-            print('frequncy stride={:d}, time stride={:d}'.format(fstride, tstride))
-            print('number of patches={:d}'.format(num_patches))
-
-        
-        # the linear projection layer # what to use for???
-        # new_proj = torch.nn.Conv2d(1, self.original_embedding_dim, kernel_size=(16, 16), stride=(fstride, tstride))
-        # self.proj = new_proj
+		in_chans = 1
+		# img_size = _ntuple(2)(img_size)
+		patch_size = _ntuple(2)(patch_size)
+		# num_patches = (img_size[1] // patch_size[1]) * (img_size[0] // patch_size[0])
+		# self.img_size = img_size
+		self.patch_size = patch_size
+		# self.num_patches = num_patches
+		# print('self num patches here', self.num_patches)
+		self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
 
 
-        # positional embedding
+		# automatcially get the intermediate shape
+		f_dim, t_dim = self.get_shape(fstride, tstride, input_fdim, input_tdim)
+		num_patches = f_dim * t_dim
+		self.num_patches = num_patches
+		print('self num patches here', self.num_patches)
 
-        new_pos_embed = nn.Parameter(torch.zeros(1, self.num_patches + 2, self.original_embedding_dim))
-        self.pos_embed = new_pos_embed
-        trunc_normal_(new_pos_embed, std=.02)
-        self.pos_drop = nn.Dropout(p=drop_rate)
-
-
-
-    def get_shape(self, fstride, tstride, input_fdim=128, input_tdim=1024):
-        test_input = torch.randn(1, 1, input_fdim, input_tdim)
-        test_proj = nn.Conv2d(1, self.original_embedding_dim, kernel_size=(16, 16), stride=(fstride, tstride))
-        test_out = test_proj(test_input)
-        f_dim = test_out.shape[2]
-        t_dim = test_out.shape[3]
-        return f_dim, t_dim
-
-    def forward(self, x):
-
-    	x = x.unsqueeze(1)
-    	x = x.transpose(2, 3)
-
-    	B = x.shape[0] # batch
+		# positional embedding
+		self.embed_dim = embed_dim
+		embed_len = self.num_patches
+		
+		self.pos_embed = nn.Parameter(torch.randn(1, embed_len, embed_dim) * .02)
+		print('self.pos_embed in init', np.shape(self.pos_embed))
+		self.original_embedding_dim = self.pos_embed.shape[2]
+		print('original embedding dim', self.original_embedding_dim)	
+		
 
 
-        x = self.proj(x).flatten(2).transpose(1, 2)  # Linear projection of 1D patch embedding
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        dist_token = ... ?
+		if config.debug:
+			print('frequncy stride={:d}, time stride={:d}'.format(fstride, tstride))
+			print('number of patches={:d}'.format(num_patches))
 
-        x = torch.cat((cls_tokens, dist_token, x), dim=1)
-        x = x + self.pos_embed
-        x = self.pos_drop(x)
+		
 
-        x = nn.Sequential(nn.LayerNorm(self.original_embedding_dim), nn.Linear(self.original_embedding_dim, label_dim))
+		# new_pos_embed = nn.Parameter(torch.zeros(1, self.num_patches + 2, self.original_embedding_dim))
+		new_pos_embed = nn.Parameter(torch.zeros(1, self.num_patches + 1, self.original_embedding_dim))
+		self.pos_embed = new_pos_embed
+		nn.init.trunc_normal_(new_pos_embed, std=.02)
+		print('drop rate', drop_rate)
+		self.pos_drop = nn.Dropout(p=drop_rate)
 
-        return x
 
 
-if __name__ == '__main__':
-	input_tdim = 399
-    ast_mdl = ASTModel(input_tdim=input_tdim,label_dim=50)
-    
-    # input a batch of 10 spectrogram, each with 512 time frames and 128 frequency bins
-    test_input = torch.rand([10, input_tdim, 128])
-    test_output = ast_mdl(test_input)
-    # output should be in shape [10, 50], i.e., 10 samples, each with prediction of 50 classes.
-    print(test_output.shape)
+		# Transformer encoder blocks:
+
+		self.transformer = transformer_encoder.TransformerBlocks()
 
 
 
 
+	def get_shape(self, fstride, tstride, input_fdim=128, input_tdim=1024):
+		test_input = torch.randn(1, 1, input_fdim, input_tdim)
+		test_proj = self.proj
+		test_out = test_proj(test_input)
+		f_dim = test_out.shape[2]
+		t_dim = test_out.shape[3]
+		return f_dim, t_dim
+
+	def forward(self, x):
+
+		x = x.unsqueeze(1)
+		print('x unsqueezed', np.shape(x))
+		x = x.transpose(2, 3)
+		print('x after transpose', np.shape(x))
+		B = x.shape[0] # batch
+
+		x = self.proj(x).flatten(2).transpose(1, 2)  # Linear projection of 1D patch embedding
+		print('x shape after linear proj', np.shape(x))
+		self.cls_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
+		print('Shape for token', np.shape(self.cls_token))
+		cls_tokens = self.cls_token.expand(B, -1, -1)
+		print('shape tokens', np.shape(cls_tokens))
+
+		x = torch.cat((cls_tokens, x), dim=1)
+		print('x after torch cat', np.shape(x))
+		print('self.pos_embed dims', np.shape(self.pos_embed))
+		x = x + self.pos_embed
+		x = self.pos_drop(x)
 
 
+		# Transformer encoder here
+		x = self.transformer.blocks(x)
 
 
+		# Final linear layer
 
+		x = nn.Sequential(nn.LayerNorm(self.original_embedding_dim), nn.Linear(self.original_embedding_dim, config.n_classes))(x)
 
-
+		return x

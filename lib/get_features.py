@@ -42,6 +42,6 @@ def compute_fbank_for_split(data_dir, label_file, cv_fold):
 	return
 
 
-for i in [1, 2, 3, 4, 5]:
+for i in [1]:
 	# IF PICKLE NOT EXIST DO, to add if time permits:
 	compute_fbank_for_split(config.data_dir, config.label_file, i)
