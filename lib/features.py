@@ -106,7 +106,8 @@ def extract_FBANK(signal, fft_len, sr):
 
 	if config.debug:
 		print('Shape of LMS', np.shape(log_mel_spectrogram))
-		plt.imshow(log_mel_spectrogram, aspect='auto')
+		plt.title('Log-mel spectrogram')
+		plt.imshow(log_mel_spectrogram.T, aspect='auto')
 		plt.show()
 	return log_mel_spectrogram
 
@@ -188,9 +189,11 @@ def create_log_mel_matrix(sr, n_spec_bins, n_mel=32):
 
 	# Create bins of spectrogram from 0 to fs/2
 	spec_hz = np.linspace(0.0, sr / 2., n_spec_bins) 
+	print(spec_hz)
 
 	# Convert scaling to mel
 	spec_mel = hz_to_mel(spec_hz)
+	print(spec_mel)
 
 	# Upper edge at fs/2 Hz
 	# Lower edge at 0 Hz
@@ -209,9 +212,10 @@ def create_log_mel_matrix(sr, n_spec_bins, n_mel=32):
 
 		mel_weights[:, i] = np.maximum(0.0, np.minimum(lower, upper))
 
+
 	# Remove DC bin:
 
-	mel_weights[:, :] = 0.0
+	mel_weights[0, :] = 0.0
 
 	return mel_weights
 
