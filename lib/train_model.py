@@ -7,6 +7,9 @@ import numpy as np
 from torch.utils.data import TensorDataset, DataLoader
 import torch.optim as optim
 import torch.nn as nn
+from datetime import datetime
+from sklearn.metrics import accuracy_score
+
 
 
 # Load feature pickle here:
@@ -64,7 +67,12 @@ ast_model = AST(input_tdim=input_tdim, n_classes=config.n_classes)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(ast_model.parameters(), lr=0.001, momentum=0.9)
 
-for epoch in range(2):  # loop over the dataset multiple times
+
+
+best_running_loss = np.inf
+
+
+for epoch in range(config.n_epochs):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(train_loader, 0):
@@ -79,21 +87,24 @@ for epoch in range(2):  # loop over the dataset multiple times
 
         # forward + backward + optimize
         outputs = ast_model(inputs)
-        loss = criterion(outputs, labels)
+        print('np.shape of outputs', np.shape(outputs))
+        print('np.shape of labels', np.shape(labels))
+        loss = criterion(outputs, torch.max(labels, 1)[1])
         loss.backward()
         optimizer.step()
 
         # print statistics
         running_loss += loss.item()
+        acc = accuracy_score(np.argmax(labels.detach().numpy(), axis=1),
+              np.argmax(outputs.detach().numpy(), axis=1))
+        print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss:.3f}, acc: {acc:.3f}')
 
-        print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss:.3f}')
 
+        checkpoint_name = f'model_e{epoch}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.pth'
 
-        checkpoint_name = f'model_e{e}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.pth'
-
-        
-        torch.save(ast_model.state_dict(), os.path.join(config.model_dir, 'pytorch', checkpoint_name))
-        print('Saving model to:', os.path.join(config.model_dir, 'pytorch', checkpoint_name)) 
+        if running_loss < best_running_loss:
+            torch.save(ast_model.state_dict(), os.path.join(config.model_dir, checkpoint_name))
+            print('Saving model to:', os.path.join(config.model_dir, checkpoint_name)) 
 
         running_loss = 0.0
 

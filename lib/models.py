@@ -129,6 +129,8 @@ class AST(nn.Module):
 		# Transformer encoder here
 		x = self.transformer.blocks(x)
 
+		x = (x[:, 0] + x[:, 1]) / 2
+
 
 		# Final linear layer
 

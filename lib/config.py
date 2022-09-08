@@ -14,6 +14,8 @@ label_file = os.path.join(
 dir_out_feat = os.path.join(
     ROOT_DIR, "data", "feat")
 
+model_dir = os.path.join(
+    ROOT_DIR, "models")
 # Parameters for FBANK transform:
 win_len = 200 # In samples.
 hop_len = 100 # In samples
@@ -31,6 +33,7 @@ n_classes = 50
 
 # Training loop properties
 batch_size = 10
+n_epochs = 1
 
 
 
@@ -39,7 +42,7 @@ debug = False # debug parameter. Only set to True if issues suspected, opens var
 # plots and print statements
 
 # Create directories if they do not exist:
-for directory in [dir_out_feat]:
+for directory in [dir_out_feat, model_dir]:
 	if not os.path.isdir(directory):
 		os.mkdir(directory)
 		print('Created directory:', directory)
