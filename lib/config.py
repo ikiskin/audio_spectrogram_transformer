@@ -12,3 +12,6 @@ label_file = os.path.join(
 
 # Signal rate (Hz) for re-sampling:
 sr = 8000
+
+debug = True # debug parameter. Only set to True if issues suspected, opens various diagnostic
+# plots and print statements
