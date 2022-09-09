@@ -1,4 +1,4 @@
-# Audio Spectrogram Transfer
+# Audio Spectrogram Transformer
 
 ## Training a custom class of AST (Audio Spectrogram Transformer) with log-mel filterbank features on ESC-50 data
 Reference paper: [Audio Spectrogram Transformer](https://arxiv.org/pdf/2104.01778.pdf)
