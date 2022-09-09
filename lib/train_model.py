@@ -1,4 +1,5 @@
 from models import AST
+from simple_cnn_baseline import Net
 import config
 import torch
 import os
@@ -9,7 +10,6 @@ import torch.optim as optim
 import torch.nn as nn
 from datetime import datetime
 from sklearn.metrics import accuracy_score
-
 
 
 # Load feature pickle here:
@@ -69,9 +69,17 @@ for i, cv_fold in enumerate([1, 2, 3, 4, 5]):
     input_tdim = np.shape(x_train)[1] # n_frames
     input_fdim = np.shape(x_train)[-1] # n_mel
 
-    ast_model = AST(input_tdim=input_tdim, n_classes=config.n_classes)
-    print(ast_model)
 
+    # Choice of model here
+    # ast_model = AST(input_tdim=input_tdim, n_classes=config.n_classes)
+    # print(ast_model)
+
+    if config.model_name == 'conv':
+        ast_model = Net()
+        print(ast_model)
+    else:
+        ast_model = AST(input_tdim=input_tdim, n_classes=config.n_classes)
+        print(ast_model)
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'Training on {device}')
@@ -89,7 +97,7 @@ for i, cv_fold in enumerate([1, 2, 3, 4, 5]):
 
     criterion = nn.CrossEntropyLoss()
     # optimizer = optim.SGD(ast_model.parameters(), lr=0.01, momentum=0.9)
-    optimizer = optim.Adam(ast_model.parameters(), lr=0.0003)
+    optimizer = optim.Adam(ast_model.parameters(), lr=0.003)
 
 
 
@@ -121,6 +129,9 @@ for i, cv_fold in enumerate([1, 2, 3, 4, 5]):
 
             x = x.to(device).detach()
             y = y.to(device).detach()
+
+            if config.model_name == 'conv':
+                x = torch.unsqueeze(x, dim=1)
             optimizer.zero_grad()
             y_pred = ast_model(x)
             loss = criterion(y_pred, torch.max(y, 1)[1])

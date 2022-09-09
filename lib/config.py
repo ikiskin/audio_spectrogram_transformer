@@ -31,10 +31,14 @@ n_mel = 128 # number of bins in log-mel spectrogram to match AST paper
 norm_per_sample = True
 
 
+# Choose model:
+# model_name = 'conv' # Selects simple 2D conv
+model_name = 'AST' # Any other string selects transformer: TODO update
+
 # Transformer encoder properties
 embed_dim = 768
-num_heads = 12
-depth = 12
+num_heads = 6
+depth = 3
 n_classes = 50
 
 # Training loop properties
@@ -44,7 +48,7 @@ max_overrun = 20 # for early stopping, nb of epochs to train with no improvement
 
 # Evaluation
 
-debug = False # debug parameter. Only set to True if issues suspected, opens various diagnostic
+debug = True # debug parameter. Only set to True if issues suspected, opens various diagnostic
 # plots and print statements
 
 # Create directories if they do not exist:
