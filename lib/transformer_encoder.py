@@ -109,10 +109,10 @@ class TransformerBlocks(nn.Module):
 		for i in range(config.depth)])
 
 
-	# def forward(self, x):
-	# 	x = self.forward_features(x)
-	# 	x = self.forward_head(x)
-	# 	return x
+	def forward(self, x):
+		x = self.forward_features(x)
+		x = self.forward_head(x)
+		return x
 
 
 

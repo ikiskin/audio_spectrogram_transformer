@@ -43,12 +43,12 @@ n_classes = 50
 
 # Training loop properties
 batch_size = 48 # as set in the paper for ESC-50
-n_epochs = 200
+n_epochs = 500
 max_overrun = 20 # for early stopping, nb of epochs to train with no improvement
 
 # Evaluation
 
-debug = True # debug parameter. Only set to True if issues suspected, opens various diagnostic
+debug = False # debug parameter. Only set to True if issues suspected, opens various diagnostic
 # plots and print statements
 
 # Create directories if they do not exist:

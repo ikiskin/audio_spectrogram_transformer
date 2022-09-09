@@ -73,13 +73,14 @@ def load_model(filepath, model):
 
 # Load best models: TODO: automate
 
-# Best Conv2D-2-layer-kernel-5
-checkpoint_names = {1:'model_e80_2022_09_09_10_43_45.pth', 2:'model_e51_2022_09_09_10_45_49.pth',
-                     3:'model_e79_2022_09_09_10_48_41.pth', 4:'model_e116_2022_09_09_10_52_36.pth', 5:'model_e78_2022_09_09_10_55_26.pth'}
+if config.model_name == 'conv':
+    # Best Conv2D-2-layer-kernel-5
+    checkpoint_names = {1:'model_e80_2022_09_09_10_43_45.pth', 2:'model_e51_2022_09_09_10_45_49.pth',
+                         3:'model_e79_2022_09_09_10_48_41.pth', 4:'model_e116_2022_09_09_10_52_36.pth', 5:'model_e78_2022_09_09_10_55_26.pth'}
 
 
 # Best AST models:
-checkpoint_names = {1:'model_e183_2022_09_09_11_13_47.pth', 2:'model_e147_2022_09_09_11_15_54.pth', 3:'model_e196_2022_09_09_11_18_36.pth',
+checkpoint_names = {1:'model_e92_2022_09_09_12_02_09.pth', 2:'model_e147_2022_09_09_11_15_54.pth', 3:'model_e196_2022_09_09_11_18_36.pth',
                     4:'model_e193_2022_09_09_11_21_07.pth', 5:'model_e186_2022_09_09_11_23_38.pth'}
 
 # Load feature pickle here:
