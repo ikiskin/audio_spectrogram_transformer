@@ -70,6 +70,7 @@ for i, cv_fold in enumerate([1, 2, 3, 4, 5]):
     input_fdim = np.shape(x_train)[-1] # n_mel
 
     ast_model = AST(input_tdim=input_tdim, n_classes=config.n_classes)
+    print(ast_model)
 
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -87,7 +88,8 @@ for i, cv_fold in enumerate([1, 2, 3, 4, 5]):
     ### Training loop
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(ast_model.parameters(), lr=0.001, momentum=0.9)
+    # optimizer = optim.SGD(ast_model.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.Adam(ast_model.parameters(), lr=0.0003)
 
 
 

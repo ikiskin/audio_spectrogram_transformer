@@ -98,7 +98,7 @@ class Block(nn.Module):
 		# x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x))))
 		return x
 
-class TransformerBlocks:
+class TransformerBlocks(nn.Module):
 
 	def __init__(self):
 		super().__init__()

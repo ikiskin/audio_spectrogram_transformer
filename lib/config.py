@@ -33,13 +33,13 @@ norm_per_sample = True
 
 # Transformer encoder properties
 embed_dim = 768
-num_heads = 4
-depth = 2
+num_heads = 12
+depth = 12
 n_classes = 50
 
 # Training loop properties
-batch_size = 10
-n_epochs = 100
+batch_size = 48 # as set in the paper for ESC-50
+n_epochs = 200
 max_overrun = 20 # for early stopping, nb of epochs to train with no improvement
 
 # Evaluation

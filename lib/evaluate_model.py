@@ -71,11 +71,11 @@ def load_model(filepath, model):
 
 
 # Load best models: TODO: automate
-checkpoint_names = {1:'model_e99_2022_09_09_08_56_09.pth', 2:'model_e96_2022_09_09_08_57_52.pth',
+checkpoint_names = {1:'model_e192_2022_09_09_09_49_05.pth', 2:'model_e155_2022_09_09_09_31_21.pth',
                      3:'model_e99_2022_09_09_08_59_44.pth', 4:'model_e95_2022_09_09_09_01_32.pth', 5:'model_e95_2022_09_09_09_03_24.pth'}
 
 # Load feature pickle here:
-for i, cv_fold in enumerate([1, 2, 3, 4, 5]):
+for i, cv_fold in enumerate([1]):
     # Each model [i] has been trained on indices NOT i, so we just need to load by index [i]
 
     pickle_name = ('lms_cv_fold_' + str(cv_fold) + '_len_fft_' + str(config.len_fft) + '_win_len_' + str(config.win_len)

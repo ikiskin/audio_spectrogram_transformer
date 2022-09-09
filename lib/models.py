@@ -33,7 +33,8 @@ class AST(nn.Module):
 	 n_classes=50):
 		super(AST, self).__init__()
 
-		print('In super init')
+		if config.debug:
+			print('In super init')
 		# Patch embeddings based on 
 		# https://github.com/rwightman/pytorch-image-models/blob/fa8c84eede55b36861460cc8ee6ac201c068df4d/timm/models/layers/patch_embed.py#L15
 
@@ -61,7 +62,8 @@ class AST(nn.Module):
 		f_dim, t_dim = self.get_shape(fstride, tstride, input_fdim, input_tdim)
 		num_patches = f_dim * t_dim
 		self.num_patches = num_patches
-		print('self num patches here', self.num_patches)
+		if config.debug:
+			print('self num patches here', self.num_patches)
 
 
 
@@ -73,9 +75,11 @@ class AST(nn.Module):
 		self.cls_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
 		
 		self.pos_embed = nn.Parameter(torch.randn(1, embed_len, embed_dim) * .02)
-		print('self.pos_embed in init', np.shape(self.pos_embed))
+		if config.debug:
+			print('self.pos_embed in init', np.shape(self.pos_embed))
 		self.original_embedding_dim = self.pos_embed.shape[2]
-		print('original embedding dim', self.original_embedding_dim)	
+		if config.debug:
+			print('original embedding dim', self.original_embedding_dim)	
 		
 
 
@@ -89,7 +93,8 @@ class AST(nn.Module):
 		new_pos_embed = nn.Parameter(torch.zeros(1, self.num_patches + 1, self.original_embedding_dim))
 		self.pos_embed = new_pos_embed
 		nn.init.trunc_normal_(new_pos_embed, std=.02)
-		print('drop rate', drop_rate)
+		if config.debug:
+			print('drop rate', drop_rate)
 		self.pos_drop = nn.Dropout(p=drop_rate)
 
 
@@ -113,21 +118,26 @@ class AST(nn.Module):
 	def forward(self, x):
 
 		x = x.unsqueeze(1)
-		print('x unsqueezed', np.shape(x))
+		if config.debug:
+			print('x unsqueezed', np.shape(x))
 		x = x.transpose(2, 3)
-		print('x after transpose', np.shape(x))
+		if config.debug:
+			print('x after transpose', np.shape(x))
 		B = x.shape[0] # batch
 
 		x = self.proj(x).flatten(2).transpose(1, 2)  # Linear projection of 1D patch embedding
-		print('x shape after linear proj', np.shape(x))
-		print('Shape for token', np.shape(self.cls_token))
+		if config.debug:
+			print('x shape after linear proj', np.shape(x))
+			print('Shape for token', np.shape(self.cls_token))
 		cls_tokens = self.cls_token.expand(B, -1, -1)
-		print('shape tokens', np.shape(cls_tokens))
-		print('x device', x.get_device())
-		print('cls_tokens device',cls_tokens.get_device())
+		if config.debug:
+			print('shape tokens', np.shape(cls_tokens))
+			print('x device', x.get_device())
+			print('cls_tokens device',cls_tokens.get_device())
 		x = torch.cat((cls_tokens, x), dim=1)
-		print('x after torch cat', np.shape(x))
-		print('self.pos_embed dims', np.shape(self.pos_embed))
+		if config.debug:
+			print('x after torch cat', np.shape(x))
+			print('self.pos_embed dims', np.shape(self.pos_embed))
 		x = x + self.pos_embed
 		x = self.pos_drop(x)
 
