@@ -12,10 +12,23 @@ Reference paper: [Audio Spectrogram Transformer](https://arxiv.org/pdf/2104.0177
 	* Positional token creation and embeddings
 	* A minimal transformer/attention building block
 	* Final linear layer and classification mapping
+* A simple CNN baseline to verify correctness of features
 
 
 
 ## How to run
+* To extract features:
+
+  ``` python get_features.py ```
+
+* To train a model, select the choice of model (`model_name`) and its parameters in `config.py`. Then:
+
+  ``` python train_model.py ```
+
+* To evaluate:
+
+  ``` python evaluate_model.py ```
+
 
 ### Requirements
 Requirements here etc
@@ -34,9 +47,22 @@ Unlike in the original code accompanying the paper, the transformers implemented
 The encoder properties are set with `embed_dim`, `num_heads`, and `depth` in `lib/config.py`.
 
 ## Model training and evaluation
-The model is trained with a 5-fold validation strategy, where the model is trained on 80% of the training data, e.g. splits 1, 2, 3, 4, and tested on the remaining 20% (split 5). This procedure is iterated such that the model performance over `cv_fold` `i` is evaluated by training on all the remaining `cv_fold`s except `i`.
+The model is trained with a 5-fold validation strategy, where the model is trained on 80% of the training data, e.g. splits 1, 2, 3, 4, and tested on the remaining 20% (split 5). This procedure is iterated such that the model performance over `cv_fold` `i` is evaluated by training on all the remaining `cv_fold`s except `i`. No data augmentation was performed due to time constraints.
+
+
+## Results
+For the models, the results can be accessed in `plots/`. Results are reported as means ± standard deviations over 5 folds. We note that the weighted and macro average are identical for this dataset as each fold is balanced with 8 instances.
+
+| Model                    | Average Precision | Average Recall | Average F1 |
+|--------------------------|-------------------|----------------|------------|
+| 2-layer-5x5-kernel-CNN   | 0.208 ± 0.045     | 0.202 ± 0.036  |0.200 ± 0.040|
+| AST-x-head-x-depth       |                   |                |            |
+| Random guess (reference) | 0.02              | 0.02           | 0.02       |
+
 
 ## Known issues/working notes:
 * Paper uses Hamming window, Hanning implemented here
-* The model achieves good performance on training data, but more time is needed to generalise well across splits.
+* The model achieves good performance on training data, but more time is needed to generalise well across splits. There is likely a bug within `models.py` or `transformer_encoder.py` with how the model is defined.
 * As a result of the way frames are calculated, we need to verify that the time dimensions of FBANK features match the ones in the original paper. This may affect good parameter choices for the embedding and token lengths.
+* Results are output per single classification fold and saved to a text file. These can be stored in the dictionary during the evaluation loop and automatically computed
+* Models were terminated according to early stopping with `config.max_overrun` according to the training accuracy. Time permitting we would change this to a stratified validation set within each fold.
