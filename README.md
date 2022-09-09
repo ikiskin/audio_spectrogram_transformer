@@ -43,6 +43,8 @@ The code is configured in `lib/config.py`, which includes parameters that define
 ### Log-mel features
 The features are parameterised in lengths in units of samples, in `config.py`. By default, we use a Hanning window of 25 ms every 10 ms, and an FFT size of 512, with 128 log-mel coefficients. This creates an example feature representation as follows:
 
+![Example log-mel spectrogram with 128 coefficients](./plots/example_lms.png "Log-mel spectrogram")
+
 We also include per-sample normalisation (`norm_per_sample`), which removes the mean and divides each spectrogram input by its standard deviation.
 
 ### Transformer
