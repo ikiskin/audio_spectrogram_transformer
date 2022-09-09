@@ -14,9 +14,11 @@ Reference paper: [Audio Spectrogram Transformer](https://arxiv.org/pdf/2104.0177
 	* Final linear layer and classification mapping
 * A simple CNN baseline to verify correctness of features
 
-
+- - -
 
 ## How to run
+* Extract data from the [ESC-50 repository](https://github.com/karolpiczak/ESC-50) and configure the data path of `*.wav` files in `config.data_dir`, and the label path in `config.label_file`.
+
 * To extract features:
 
   ``` python get_features.py ```
@@ -33,8 +35,9 @@ Reference paper: [Audio Spectrogram Transformer](https://arxiv.org/pdf/2104.0177
 ### Requirements
 This code requires PyTorch, and can be run on either a CPU or GPU. You can re-create the environment from the conda yaml file as follows:
 `` conda env create -f ast-environment.yml ``
+- - -
 
-### Structure
+## Structure
 The code is configured in `lib/config.py`, which includes parameters that define the directories for saving outputs, and parameters that control feature transformation, the transformer architecture, and the training loop (e.g. batch size, learning rate, epochs).
 
 ### Log-mel features
@@ -147,7 +150,7 @@ For the models, the results can be accessed in `plots/`. Results are reported as
 | AST-6-head-3-depth       | 0.040  ± 0.011    | 0.060 ± 0.012  |0.041 ± 0.013|
 | Random guess (reference) | 0.02              | 0.02           | 0.02       |
 
-
+- - -
 ## Known issues/working notes:
 * Paper uses Hamming window, Hanning implemented here
 * The model achieves good performance on training data, but more time is needed to generalise well across splits. There is likely a bug within `models.py` or `transformer_encoder.py` with how the model is defined.
