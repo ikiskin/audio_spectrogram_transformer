@@ -16,6 +16,9 @@ dir_out_feat = os.path.join(
 
 model_dir = os.path.join(
     ROOT_DIR, "models")
+
+plot_dir = os.path.join(
+	ROOT_DIR, "plots")
 # Parameters for FBANK transform:
 
 # From paper: "with a 25ms Hamming window every 10ms"
@@ -37,15 +40,15 @@ n_classes = 50
 # Training loop properties
 batch_size = 10
 n_epochs = 100
-max_overrun = 50 # for early stopping, nb of epochs to train with no improvement
+max_overrun = 20 # for early stopping, nb of epochs to train with no improvement
 
-
+# Evaluation
 
 debug = False # debug parameter. Only set to True if issues suspected, opens various diagnostic
 # plots and print statements
 
 # Create directories if they do not exist:
-for directory in [dir_out_feat, model_dir]:
+for directory in [dir_out_feat, model_dir, plot_dir]:
 	if not os.path.isdir(directory):
 		os.mkdir(directory)
 		print('Created directory:', directory)
