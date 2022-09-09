@@ -31,7 +31,8 @@ Reference paper: [Audio Spectrogram Transformer](https://arxiv.org/pdf/2104.0177
 
 
 ### Requirements
-Requirements here etc
+This code requires PyTorch, and can be run on either a CPU or GPU. You can re-create the environment from the conda yaml file as follows:
+`` conda env create -f ast-environment.yml ``
 
 ### Structure
 The code is configured in `lib/config.py`, which includes parameters that define the directories for saving outputs, and parameters that control feature transformation, the transformer architecture, and the training loop (e.g. batch size, learning rate, epochs).
@@ -143,7 +144,7 @@ For the models, the results can be accessed in `plots/`. Results are reported as
 | Model                    | Average Precision | Average Recall | Average F1 |
 |--------------------------|-------------------|----------------|------------|
 | 2-layer-5x5-kernel-CNN   | 0.208 ± 0.045     | 0.202 ± 0.036  |0.200 ± 0.040|
-| AST-x-head-x-depth       |                   |                |            |
+| AST-6-head-3-depth       | 0.040  ± 0.011    | 0.060 ± 0.012  |0.041 ± 0.013|
 | Random guess (reference) | 0.02              | 0.02           | 0.02       |
 
 
