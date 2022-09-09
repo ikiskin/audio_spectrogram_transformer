@@ -153,7 +153,7 @@ For the models, the results can be accessed in `plots/`. Results are reported as
 | Random guess (reference) | 0.02              | 0.02           | 0.02       |
 
 - - -
-## Known issues/working notes:
+# Known issues/working notes:
 * The model achieves good performance on training data, but more time is needed to generalise well across splits. There is likely a bug within `models.py` or `transformer_encoder.py` with how the model is defined.
 * As a result of the way frames are calculated, we need to verify that the time dimensions of FBANK features match the ones in the original paper. This may affect good parameter choices for the embedding and token lengths.
 * Paper uses Hamming window, Hanning implemented here.
