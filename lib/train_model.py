@@ -10,10 +10,11 @@ import torch.nn as nn
 from datetime import datetime
 from sklearn.metrics import accuracy_score
 
+# Load GPU
 
 
-# Load feature pickle here:
 cv_fold = 1
+x_val = None  # For code compatibility
 
 pickle_name = ('lms_cv_fold_' + str(cv_fold) + '_len_fft_' + str(config.len_fft) + '_win_len_' + str(config.win_len)
 + '_hop_len_' + str(config.hop_len) + '_n_mel_' + str(config.n_mel) + '.pkl')  
@@ -29,7 +30,7 @@ x_train = feat['X_train']
 y_train = feat['y_train']
 print(np.shape(x_train), np.shape(y_train))
 
-
+print(x_train)
 
 # Dataloader
 def build_dataloader(x_train, y_train, x_val=None, y_val=None, shuffle=True, n_channels=1):
@@ -62,6 +63,19 @@ input_fdim = np.shape(x_train)[-1] # n_mel
 
 ast_model = AST(input_tdim=input_tdim, n_classes=config.n_classes)
 
+
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+print(f'Training on {device}')
+
+if torch.cuda.device_count() > 1:
+    print("Using data parallel")
+    ast_model = nn.DataParallel(ast_model, device_ids=list(range(torch.cuda.device_count())))
+
+ast_model = ast_model.to(device)
+# Load feature pickle here:
+
+
+
 ### Training loop
 
 criterion = nn.CrossEntropyLoss()
@@ -72,41 +86,128 @@ optimizer = optim.SGD(ast_model.parameters(), lr=0.001, momentum=0.9)
 best_running_loss = np.inf
 
 
-for epoch in range(config.n_epochs):  # loop over the dataset multiple times
+# for epoch in range(config.n_epochs):  # loop over the dataset multiple times
 
-    running_loss = 0.0
-    for i, data in enumerate(train_loader, 0):
-        # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data
-        # print('inputs', inputs)
-        # print('labels', labels)
-        # print('actual input input shape', np.shape(inputs))
-        # print('label shape', np.shape(labels))
-        # zero the parameter gradients
+#     running_loss = 0.0
+#     for i, data in enumerate(train_loader, 0):
+#         # get the inputs; data is a list of [inputs, labels]
+#         inputs, labels = data
+#         # print('inputs', inputs)
+#         # print('labels', labels)
+#         # print('actual input input shape', np.shape(inputs))
+#         # print('label shape', np.shape(labels))
+#         # zero the parameter gradients
+#         optimizer.zero_grad()
+
+#         # forward + backward + optimize
+#         outputs = ast_model(inputs)
+#         print('np.shape of outputs', np.shape(outputs))
+#         print('np.shape of labels', np.shape(labels))
+#         loss = criterion(outputs, torch.max(labels, 1)[1])
+#         loss.backward()
+#         optimizer.step()
+
+#         # print statistics
+#         running_loss += loss.item()
+#         acc = accuracy_score(np.argmax(labels.detach().numpy(), axis=1),
+#               np.argmax(outputs.detach().numpy(), axis=1))
+#         print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss:.3f}, acc: {acc:.3f}')
+
+
+#         checkpoint_name = f'model_e{epoch}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.pth'
+
+#         if running_loss < best_running_loss:
+#             torch.save(ast_model.state_dict(), os.path.join(config.model_dir, checkpoint_name))
+#             print('Saving model to:', os.path.join(config.model_dir, checkpoint_name)) 
+
+#         running_loss = 0.0
+
+
+
+all_train_loss = []
+all_train_acc = []
+all_val_loss = []
+all_val_acc = []
+best_val_loss = np.inf
+best_val_acc = -np.inf
+
+# best_train_loss = np.inf
+best_train_acc = -np.inf
+
+best_epoch = -1
+checkpoint_name = None
+overrun_counter = 0
+
+for e in range(config.n_epochs):
+    train_loss = 0.0
+    ast_model.train()
+
+    all_y = []
+    all_y_pred = []
+    for batch_i, data in enumerate(train_loader, 0):
+
+        ##Necessary in order to handle single and multi input feature spaces
+        x, y = data
+
+        x = x.to(device).detach()
+        y = y.to(device).detach()
         optimizer.zero_grad()
+        y_pred = ast_model(x)
+        loss = criterion(y_pred, torch.max(y, 1)[1])
 
-        # forward + backward + optimize
-        outputs = ast_model(inputs)
-        print('np.shape of outputs', np.shape(outputs))
-        print('np.shape of labels', np.shape(labels))
-        loss = criterion(outputs, torch.max(labels, 1)[1])
         loss.backward()
         optimizer.step()
 
-        # print statistics
-        running_loss += loss.item()
-        acc = accuracy_score(np.argmax(labels.detach().numpy(), axis=1),
-              np.argmax(outputs.detach().numpy(), axis=1))
-        print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss:.3f}, acc: {acc:.3f}')
+        train_loss += loss.item()
+        all_y.append(y.cpu().detach())
+        all_y_pred.append(y_pred.cpu().detach())
+
+        del x
+        del y
+
+    all_train_loss.append(train_loss/len(train_loader))
+
+    all_y = torch.cat(all_y)
+    all_y_pred = torch.cat(all_y_pred)
+    train_acc = accuracy_score(np.argmax(all_y.detach().numpy(), axis=1),
+              np.argmax(all_y_pred.detach().numpy(), axis=1))
+    all_train_acc.append(train_acc)
 
 
-        checkpoint_name = f'model_e{epoch}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.pth'
+    # Can add more conditions to support loss instead of accuracy. Use *-1 for loss inequality instead of acc
+    if x_val is not None:
+        val_loss, val_acc = test_model(model, val_loader, criterion, 0.5, device=device)
+        all_val_loss.append(val_loss)
+        all_val_acc.append(val_acc)
 
-        if running_loss < best_running_loss:
-            torch.save(ast_model.state_dict(), os.path.join(config.model_dir, checkpoint_name))
-            print('Saving model to:', os.path.join(config.model_dir, checkpoint_name)) 
+        acc_metric = val_acc
+        best_acc_metric = best_val_acc
+    else:
+        acc_metric = train_acc
+        best_acc_metric = best_train_acc
+    if acc_metric > best_acc_metric:  
+        # if checkpoint_name is not None:
+            # os.path.join(os.path.pardir, 'models', 'pytorch', checkpoint_name)
 
-        running_loss = 0.0
+        checkpoint_name = f'model_e{e}_{datetime.now().strftime("%Y_%m_%d_%H_%M_%S")}.pth'
+
+        torch.save(ast_model.state_dict(), os.path.join(config.model_dir, checkpoint_name))
+        print('Saving model to:', os.path.join(config.model_dir, checkpoint_name)) 
+        best_epoch = e
+        best_train_acc = train_acc
+        best_train_loss = train_loss
+        if x_val is not None:
+            best_val_acc = val_acc
+            best_val_loss = val_loss
+        overrun_counter = -1
+
+    overrun_counter += 1
+    if x_val is not None:
+        print('Epoch: %d, Train Loss: %.8f, Train Acc: %.8f, Val Loss: %.8f, Val Acc: %.8f, overrun_counter %i' % (e, train_loss/len(train_loader), train_acc, val_loss/len(val_loader), val_acc,  overrun_counter))
+    else:
+        print('Epoch: %d, Train Loss: %.8f, Train Acc: %.8f, overrun_counter %i' % (e, train_loss/len(train_loader), train_acc, overrun_counter))
+    if overrun_counter > config.max_overrun:
+        break
 
 
 

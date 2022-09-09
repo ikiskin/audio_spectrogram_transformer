@@ -77,7 +77,7 @@ def evaluate_model(model, X_test, y_test):
 	return test_acc
 
 
-checkpoint_name = 'model_e0_2022_09_09_00_11_58.pth'
+checkpoint_name = 'model_e13_2022_09_09_01_20_12.pth'
 filepath = os.path.join(config.model_dir, checkpoint_name)
 
 def load_model(filepath, model = AST(input_tdim=input_tdim, n_classes=config.n_classes)):
