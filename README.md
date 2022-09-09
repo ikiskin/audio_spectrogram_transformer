@@ -154,8 +154,9 @@ For the models, the results can be accessed in `plots/`. Results are reported as
 
 - - -
 ## Known issues/working notes:
-* Paper uses Hamming window, Hanning implemented here
 * The model achieves good performance on training data, but more time is needed to generalise well across splits. There is likely a bug within `models.py` or `transformer_encoder.py` with how the model is defined.
 * As a result of the way frames are calculated, we need to verify that the time dimensions of FBANK features match the ones in the original paper. This may affect good parameter choices for the embedding and token lengths.
+* Paper uses Hamming window, Hanning implemented here.
 * Results are output per single classification fold and saved to a text file. These can be stored in the dictionary during the evaluation loop and automatically computed
 * Models were terminated according to early stopping with `config.max_overrun` according to the training accuracy. Time permitting we would change this to a stratified validation set within each fold.
+* The `yaml` file supplied is exhaustive, and needs ablation to a minimum set of packages.
