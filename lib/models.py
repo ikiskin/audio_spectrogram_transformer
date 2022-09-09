@@ -63,9 +63,14 @@ class AST(nn.Module):
 		self.num_patches = num_patches
 		print('self num patches here', self.num_patches)
 
+
+
 		# positional embedding
 		self.embed_dim = embed_dim
 		embed_len = self.num_patches
+
+		# Classifier token definition
+		self.cls_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
 		
 		self.pos_embed = nn.Parameter(torch.randn(1, embed_len, embed_dim) * .02)
 		print('self.pos_embed in init', np.shape(self.pos_embed))
@@ -93,7 +98,8 @@ class AST(nn.Module):
 
 		self.transformer = transformer_encoder.TransformerBlocks()
 
-
+		# Final linear layer
+		self.FinalLinear = nn.Sequential(nn.LayerNorm(self.original_embedding_dim), nn.Linear(self.original_embedding_dim, config.n_classes))
 
 
 	def get_shape(self, fstride, tstride, input_fdim=128, input_tdim=1024):
@@ -114,11 +120,11 @@ class AST(nn.Module):
 
 		x = self.proj(x).flatten(2).transpose(1, 2)  # Linear projection of 1D patch embedding
 		print('x shape after linear proj', np.shape(x))
-		self.cls_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
 		print('Shape for token', np.shape(self.cls_token))
 		cls_tokens = self.cls_token.expand(B, -1, -1)
 		print('shape tokens', np.shape(cls_tokens))
-
+		print('x device', x.get_device())
+		print('cls_tokens device',cls_tokens.get_device())
 		x = torch.cat((cls_tokens, x), dim=1)
 		print('x after torch cat', np.shape(x))
 		print('self.pos_embed dims', np.shape(self.pos_embed))
@@ -134,6 +140,6 @@ class AST(nn.Module):
 
 		# Final linear layer
 
-		x = nn.Sequential(nn.LayerNorm(self.original_embedding_dim), nn.Linear(self.original_embedding_dim, config.n_classes))(x)
+		x = self.FinalLinear(x)
 
 		return x
