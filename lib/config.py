@@ -32,8 +32,8 @@ norm_per_sample = True
 
 
 # Choose model:
-# model_name = 'conv' # Selects simple 2D conv
-model_name = 'AST' # Any other string selects transformer: TODO update
+model_name = 'consv' # Selects simple 2D conv
+#model_name = 'AST' # Any other string selects transformer: TODO update
 
 # Transformer encoder properties
 embed_dim = 768
@@ -42,7 +42,7 @@ depth = 12
 n_classes = 50
 dropout = 0.3
 # Training loop properties
-batch_size = 96 # as set in the paper for ESC-50
+batch_size = 48 # as set in the paper for ESC-50
 n_epochs = 50
 max_overrun = 20 # for early stopping, nb of epochs to train with no improvement
 

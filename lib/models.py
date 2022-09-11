@@ -6,7 +6,7 @@ from itertools import repeat
 import config
 import numpy as np
 import transformer_encoder
-
+import torch.nn.functional as F
 
 
 
@@ -140,6 +140,6 @@ class AST(nn.Module):
 
         # Final linear layer
 
-        x = self.FinalLinear(x)
+        x = F.relu(self.FinalLinear(x))
 
         return x
