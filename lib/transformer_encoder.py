@@ -78,7 +78,7 @@ class Attention(nn.Module):
 class Block(nn.Module):
 
 	def __init__(
-			self, dim=config.embed_dim, num_heads=config.num_heads, mlp_ratio=4., qkv_bias=False, drop=0., attn_drop=0., init_values=None,
+			self, dim=config.embed_dim, num_heads=config.num_heads, mlp_ratio=4., qkv_bias=False, drop=config.dropout, attn_drop=0., init_values=None,
 			drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm):
 		super().__init__()
 		self.norm1 = norm_layer(dim)
@@ -105,7 +105,7 @@ class TransformerBlocks(nn.Module):
 
 		self.blocks = nn.Sequential(*[Block(
 			dim=config.embed_dim, num_heads=config.num_heads, mlp_ratio=4., qkv_bias=False, init_values=None,
-			drop=0., attn_drop=0., drop_path=0., norm_layer=nn.LayerNorm, act_layer=nn.GELU)
+			drop=config.dropout, attn_drop=0., drop_path=0., norm_layer=nn.LayerNorm, act_layer=nn.GELU)
 		for i in range(config.depth)])
 
 

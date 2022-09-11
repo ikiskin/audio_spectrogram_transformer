@@ -14,6 +14,14 @@ from sklearn.metrics import accuracy_score
 
 # Load feature pickle here:
 for i, cv_fold in enumerate([1, 2, 3, 4, 5]):
+    pickle_name_test = ('lms_cv_fold_' + str(cv_fold) + '_len_fft_' + str(config.len_fft) + '_win_len_' + str(config.win_len)
+    + '_hop_len_' + str(config.hop_len) + '_n_mel_' + str(config.n_mel) + '.pkl')      
+    with open(os.path.join(config.dir_out_feat, pickle_name_test), 'rb') as f:
+        feat_test = pickle.load(f)
+        print('Loaded test features from:', os.path.join(config.dir_out_feat, pickle_name_test))
+        X_test = feat_test['X_train']
+        y_test = feat_test['y_train']
+
     x_val = None # Start with no validation data, but to be improved!
     X_train_all = []
     y_train_all = []
@@ -24,7 +32,7 @@ for i, cv_fold in enumerate([1, 2, 3, 4, 5]):
 
             with open(os.path.join(config.dir_out_feat, pickle_name), 'rb') as f:
                 feat = pickle.load(f)
-                print('Loaded features from:', os.path.join(config.dir_out_feat, pickle_name))
+                print('Loaded train features from:', os.path.join(config.dir_out_feat, pickle_name))
 
                 X_train_all.append(feat['X_train'])
                 y_train_all.append(feat['y_train'])
@@ -199,6 +207,41 @@ for i, cv_fold in enumerate([1, 2, 3, 4, 5]):
 
 
     print('Finished Training')
+    print('WARNING TESTING ON TRAIN FOR DEBUG ONLY Evaluating with model.eval()...')
+    ast_model.eval()
+    
+    test_loader = build_dataloader(x_train, y_train, shuffle=False)
+    all_y_pred = []
+    all_y = []
+
+    for x, y in test_loader:
+        print('Ensuring correct dim', np.shape(x), np.shape(y))
+
+        if config.model_name == 'conv':
+            x = torch.unsqueeze(x, dim=1)
+        x = x.to(device).detach()
+        y = y.to(device).detach()
+        
+        y_pred = ast_model(x)
+        # print(y_pred)
+        print('in for loop', np.shape(y_pred))
+        all_y.append(y)
+        all_y_pred.append(y_pred)
+
+        del x
+        del y
+        del y_pred
+
+    all_y_pred = torch.cat(all_y_pred).cpu().detach().numpy()
+    all_y = torch.cat(all_y).cpu().detach().numpy()
+
+    print('shape of pred', np.shape(all_y), np.shape(all_y_pred))
+    
+    # print(s
+
+    test_acc = accuracy_score(np.argmax(all_y, axis=1), np.argmax(all_y_pred, axis=1))
+    print('Test accuracy', test_acc)
+    print('Random guess', 1/50.)
 
 
 
