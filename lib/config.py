@@ -43,7 +43,7 @@ n_classes = 50
 dropout = 0.1
 # Training loop properties
 batch_size = 4 # as set in the paper for ESC-50
-n_epochs = 50
+n_epochs = 2
 max_overrun = 20 # for early stopping, nb of epochs to train with no improvement
 lr = 0.00001
 # Evaluation
