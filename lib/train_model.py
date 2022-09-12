@@ -10,11 +10,20 @@ import torch.optim as optim
 import torch.nn as nn
 from datetime import datetime
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report, precision_recall_curve, plot_precision_recall_curve
 
 
 
-def evaluate_model(ast_model, X_test, y_test):
+def evaluate_model(ast_model, cv_fold):
+    ''' Load data and evaluate model '''
+    pickle_name_test = ('lms_cv_fold_' + str(cv_fold) + '_len_fft_' + str(config.len_fft) + '_win_len_' + str(config.win_len)
+    + '_hop_len_' + str(config.hop_len) + '_n_mel_' + str(config.n_mel) + '.pkl')      
 
+    with open(os.path.join(config.dir_out_feat, pickle_name_test), 'rb') as f:
+        feat_test = pickle.load(f)
+        print('Loaded test features from:', os.path.join(config.dir_out_feat, pickle_name_test))
+        X_test = feat_test['X_train']
+        y_test = feat_test['y_train']
     ast_model.eval()
 
     test_loader = build_dataloader(X_test, y_test, shuffle=False)
@@ -47,22 +56,18 @@ def evaluate_model(ast_model, X_test, y_test):
         test_acc = accuracy_score(np.argmax(all_y, axis=1), np.argmax(all_y_pred, axis=1))
         print('Test accuracy', test_acc)
         print('Random guess', 1/50.)
-        return test_acc 
+        report = classification_report(np.argmax(all_y, axis=1), digits = 5)
 
-# Load feat pickle here:
-for i, cv_fold in enumerate([1]):
-    pickle_name_test = ('lms_cv_fold_' + str(cv_fold) + '_len_fft_' + str(config.len_fft) + '_win_len_' + str(config.win_len)
-    + '_hop_len_' + str(config.hop_len) + '_n_mel_' + str(config.n_mel) + '.pkl')      
-    with open(os.path.join(config.dir_out_feat, pickle_name_test), 'rb') as f:
-        feat_test = pickle.load(f)
-        print('Loaded test features from:', os.path.join(config.dir_out_feat, pickle_name_test))
-        X_test = feat_test['X_train']
-        y_test = feat_test['y_train']
+        with open(os.path.join(config.plot_dir, filename + '_cm.txt' ), "w") as text_file:
+            print(report, np.argmax(all_y_pred, axis=1)), file=text_file)
 
+        return test_acc, report
+
+def train_model(cv_fold):
     #x_val = None # Start with no validation data, but to be improved!
     X_train_all = []
     y_train_all = []
-    for j, fold in enumerate([1, 2, 3, 4, 5]):
+    for j, fold in enumerate([1, 2, 3, 4, 5]): # Load all remaining data except current fold to be used as training
         if fold != cv_fold: 
             pickle_name = ('lms_cv_fold_' + str(fold) + '_len_fft_' + str(config.len_fft) + '_win_len_' + str(config.win_len)
             + '_hop_len_' + str(config.hop_len) + '_n_mel_' + str(config.n_mel) + '.pkl')  
@@ -141,7 +146,6 @@ for i, cv_fold in enumerate([1]):
     ### Training loop
 
     criterion = nn.CrossEntropyLoss()
-    # optimizer = optim.SGD(ast_model.parameters(), lr=0.01, momentum=0.9)
     optimizer = optim.Adam(ast_model.parameters(), lr=config.lr)
 
 
@@ -201,10 +205,10 @@ for i, cv_fold in enumerate([1]):
 
 
         # Can add more conditions to support loss instead of accuracy. Use *-1 for loss inequality instead of acc
-        if 1 == 2: # override val condition check
-            #val_acc = evaluate_model(ast_model, X_test, y_test)
-            #all_val_loss.append(val_loss)
-            #all_val_acc.append(val_acc)
+        if x_val: # override val condition check
+            val_acc = evaluate_model(ast_model, X_test, y_test)
+            all_val_loss.append(val_loss)
+            all_val_acc.append(val_acc)
 
             acc_metric = val_acc
             best_acc_metric = best_val_acc
@@ -227,16 +231,39 @@ for i, cv_fold in enumerate([1]):
             best_epoch = e
             best_train_acc = train_acc
             best_train_loss = train_loss
-            if False: # override val loop
+            if x_val: # override val loop
                 best_val_acc = val_acc
-                #best_val_loss = val_loss
+                best_val_loss = val_loss
             overrun_counter = -1
 
         overrun_counter += 1
-        if 1==2: # override old convention for val detection
+        if x_val: # override old convention for val detection
             print('Epoch: %d, Train Loss: %.8f, Train Acc: %.8f, Val Acc: %.8f, overrun_counter %i' % (e, train_loss/len(train_loader), train_acc, val_acc,  overrun_counter))
         else:
             print('Epoch: %d, Train Loss: %.8f, Train Acc: %.8f, overrun_counter %i' % (e, train_loss/len(train_loader), train_acc, overrun_counter))
         if overrun_counter > config.max_overrun:
             break
-    evaluate_model(ast_model, X_test, y_test)
+    
+    return ast_model, all_train_acc
+
+
+if __name__ == "__main__":
+    # Train and evaluate model according to ESC-50 five-fold validation scheme
+
+    precision = []
+    recall = []
+    f1 = []
+
+    for cv_fold in [1, 2, 3, 4, 5]:
+        ast_model, all_train_acc = train_model(cv_fold)
+
+        # Evaluate best model according to early stopping criteria
+        test_acc, report = evaluate_model(ast_model, cv_fold)
+        precision.append(report["precision"])
+        recall.append(report["recall"])
+        f1.append(report["f1-score"])
+    print('Precision', np.mean(precision), '+-', np.std(precision))
+    print('Recall', np.mean(recall), '+-', np.std(recall))
+    print('F1', np.mean(f1), '+-', np.std(f1))
+
+
