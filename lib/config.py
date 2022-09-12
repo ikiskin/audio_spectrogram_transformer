@@ -37,13 +37,13 @@ model_name = 'consv' # Selects simple 2D conv
 
 # Transformer encoder properties
 embed_dim = 768
-num_heads = 6
-depth = 1
+num_heads = 8
+depth = 4
 n_classes = 50
 dropout = 0.1
 # Training loop properties
 batch_size = 4 # as set in the paper for ESC-50
-n_epochs = 2
+n_epochs = 50
 max_overrun = 20 # for early stopping, nb of epochs to train with no improvement
 lr = 0.00001
 # Evaluation
