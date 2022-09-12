@@ -80,7 +80,7 @@ if config.model_name == 'conv':
 
 
 # Best AST models:
-checkpoint_names = {1:'model_e92_2022_09_09_12_02_09.pth', 2:'model_e147_2022_09_09_11_15_54.pth', 3:'model_e196_2022_09_09_11_18_36.pth',
+checkpoint_names = {1:'model_e49_2022_09_12_08_59_34.pth', 2:'model_e147_2022_09_09_11_15_54.pth', 3:'model_e196_2022_09_09_11_18_36.pth',
                     4:'model_e193_2022_09_09_11_21_07.pth', 5:'model_e186_2022_09_09_11_23_38.pth'}
 
 # Load feature pickle here:

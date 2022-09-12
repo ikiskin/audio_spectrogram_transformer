@@ -20,34 +20,34 @@ def evaluate_model(ast_model, X_test, y_test):
     test_loader = build_dataloader(X_test, y_test, shuffle=False)
     all_y_pred = []
     all_y = []
+    with torch.no_grad():
+        for x, y in test_loader:
+            if config.debug:
+                print('Ensuring correct dim', np.shape(x), np.shape(y))
 
-    for x, y in test_loader:
-        if config.debug:
-            print('Ensuring correct dim', np.shape(x), np.shape(y))
+            if config.model_name == 'conv':
+                x = torch.unsqueeze(x, dim=1)
+            x = x.to(device).detach()
+            y = y.to(device).detach()
 
-        if config.model_name == 'conv':
-            x = torch.unsqueeze(x, dim=1)
-        x = x.to(device).detach()
-        y = y.to(device).detach()
-
-        y_pred = ast_model(x)
+            y_pred = ast_model(x)
         # print(y_pred)
-        all_y_pred.append(y_pred)
-        all_y.append(y)
+            all_y_pred.append(y_pred)
+            all_y.append(y)
 
-        del x
-        del y
-        del y_pred
+            del x
+            del y
+            del y_pred
 
-    all_y_pred = torch.cat(all_y_pred).cpu().detach().numpy()
-    all_y = torch.cat(all_y).cpu().detach().numpy()
+        all_y_pred = torch.cat(all_y_pred).cpu().detach().numpy()
+        all_y = torch.cat(all_y).cpu().detach().numpy()
 
-    print('shape of pred', np.shape(all_y), np.shape(all_y_pred))
+        print('shape of pred', np.shape(all_y), np.shape(all_y_pred))
 
-    test_acc = accuracy_score(np.argmax(all_y, axis=1), np.argmax(all_y_pred, axis=1))
-    print('Test accuracy', test_acc)
-    print('Random guess', 1/50.)
-    return test_acc 
+        test_acc = accuracy_score(np.argmax(all_y, axis=1), np.argmax(all_y_pred, axis=1))
+        print('Test accuracy', test_acc)
+        print('Random guess', 1/50.)
+        return test_acc 
 
 # Load feat pickle here:
 for i, cv_fold in enumerate([1]):
@@ -107,7 +107,7 @@ for i, cv_fold in enumerate([1]):
             return train_loader, val_loader
         return train_loader
 
-    train_loader = build_dataloader(x_train, y_train, X_test, y_test)
+    train_loader = build_dataloader(x_train, y_train)
 
     # Instantiate model
 
@@ -142,7 +142,7 @@ for i, cv_fold in enumerate([1]):
 
     criterion = nn.CrossEntropyLoss()
     # optimizer = optim.SGD(ast_model.parameters(), lr=0.01, momentum=0.9)
-    optimizer = optim.Adam(ast_model.parameters(), lr=0.003)
+    optimizer = optim.Adam(ast_model.parameters(), lr=config.lr)
 
 
 
@@ -167,7 +167,7 @@ for i, cv_fold in enumerate([1]):
 
         all_y = []
         all_y_pred = []
-        for batch_i, data in enumerate(train_loader[0], 0):
+        for batch_i, data in enumerate(train_loader, 0):
 
             ##Necessary in order to handle single and multi input feature spaces
             x, y = data
@@ -201,10 +201,10 @@ for i, cv_fold in enumerate([1]):
 
 
         # Can add more conditions to support loss instead of accuracy. Use *-1 for loss inequality instead of acc
-        if 1 == 1: # override val condition check
-            val_acc = evaluate_model(ast_model, X_test, y_test)
+        if 1 == 2: # override val condition check
+            #val_acc = evaluate_model(ast_model, X_test, y_test)
             #all_val_loss.append(val_loss)
-            all_val_acc.append(val_acc)
+            #all_val_acc.append(val_acc)
 
             acc_metric = val_acc
             best_acc_metric = best_val_acc
@@ -227,16 +227,16 @@ for i, cv_fold in enumerate([1]):
             best_epoch = e
             best_train_acc = train_acc
             best_train_loss = train_loss
-            if True: # override val loop
+            if False: # override val loop
                 best_val_acc = val_acc
                 #best_val_loss = val_loss
             overrun_counter = -1
 
         overrun_counter += 1
-        if 1==1: # override old convention for val detection
+        if 1==2: # override old convention for val detection
             print('Epoch: %d, Train Loss: %.8f, Train Acc: %.8f, Val Acc: %.8f, overrun_counter %i' % (e, train_loss/len(train_loader), train_acc, val_acc,  overrun_counter))
         else:
             print('Epoch: %d, Train Loss: %.8f, Train Acc: %.8f, overrun_counter %i' % (e, train_loss/len(train_loader), train_acc, overrun_counter))
         if overrun_counter > config.max_overrun:
             break
-
+    evaluate_model(ast_model, X_test, y_test)
