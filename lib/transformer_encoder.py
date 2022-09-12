@@ -74,7 +74,8 @@ class Attention(nn.Module):
 		self.proj = nn.Linear(dim, dim)
 		self.proj_drop = nn.Dropout(proj_drop)
 		
-    	def forward(self, x):
+	def forward(self, x):
+		print('In forward of attention module')
 		B, N, C = x.shape
 		qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
 		q, k, v = qkv.unbind(0)   # make torchscript happy (cannot use tensor as tuple)
@@ -108,8 +109,8 @@ class Block(nn.Module):
 
 
 	def forward(self, x):
-		# x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x))))
-		# x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x))))
+		x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x))))
+		x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x))))
 		return x
 
 class TransformerBlocks(nn.Module):

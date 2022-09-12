@@ -37,8 +37,8 @@ model_name = 'consv' # Selects simple 2D conv
 
 # Transformer encoder properties
 embed_dim = 768
-num_heads = 12
-depth = 12
+num_heads = 6
+depth = 2
 n_classes = 50
 dropout = 0.3
 # Training loop properties
