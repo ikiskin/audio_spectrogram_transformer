@@ -32,8 +32,8 @@ norm_per_sample = True
 
 
 # Choose model:
-model_name = 'consv' # Selects simple 2D conv
-#model_name = 'AST' # Any other string selects transformer: TODO update
+# model_name = 'conv' # Selects simple 2D conv (simple_cnn_baseline.py)
+model_name = 'AST' # Any other string selects transformer: TODO, check string logic
 
 # Transformer encoder properties
 embed_dim = 768
@@ -42,12 +42,12 @@ depth = 4
 n_classes = 50
 dropout = 0.1
 # Training loop properties
-batch_size = 4 # as set in the paper for ESC-50
+batch_size = 4  # Size 48 used in paper, with my GPU and this implementation, 4 was the sweet spot
 n_epochs = 50
-max_overrun = 20 # for early stopping, nb of epochs to train with no improvement
-lr = 0.00001
-# Evaluation
+max_overrun = 20  # for early stopping, nb of epochs to train with no improvement in best metric
+lr = 0.00001  # Learning rate used with optimiser (Adam)
 
+# Evaluation
 debug = False # debug parameter. Only set to True if issues suspected, opens various diagnostic
 # plots and print statements
 
