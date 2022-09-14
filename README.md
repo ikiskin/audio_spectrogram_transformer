@@ -19,6 +19,8 @@ Reference paper: [Audio Spectrogram Transformer](https://arxiv.org/pdf/2104.0177
 ## How to run
 * Extract data from the [ESC-50 repository](https://github.com/karolpiczak/ESC-50) and configure the data path of `*.wav` files in `config.data_dir`, and the label path in `config.label_file`.
 
+Then `cd` to `/lib` or run the commands below with `python lib/{x}.py` where `x` is the script name.
+
 * To extract features:
 
   ``` 
@@ -28,7 +30,7 @@ Reference paper: [Audio Spectrogram Transformer](https://arxiv.org/pdf/2104.0177
 * To train and evaluate a model over ESC-50's 5-fold validation strategy, select the choice of model (`model_name`) and its parameters in `config.py`. Then:
 
   ```
-  python traintest.py 
+  python traintest_model.py 
   ```
 
 #### Optional:
